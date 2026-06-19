@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISH Institute - Exam Timekeeper</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;       /* Midnight slate background */
+            --card-bg: #1e293b;     /* Card container background */
+            --input-bg: #334155;    /* Input field background */
+            --text-color: #f8fafc;    /* Off-white text */
+            --text-muted: #94a3b8;   /* Gray muted text */
+            --primary-color: #38bdf8; /* High-visibility sky blue */
+            --accent-color: #10b981;  /* Emerald running color */
+            --warning-color: #f43f5e; /* Vibrant red for finish lines */
+            --alert-color: #fbbf24;   /* Amber warning tint */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 850px;
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            padding: 35px;
+            border: 1px solid #334155;
+        }
+
+        /* Setup Panel Styling */
+        .config-panel {
+            background: #0f172a;
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid #334155;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+
+        .input-group label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            letter-spacing: 0.05em;
+        }
+
+        .input-group input {
+            background: var(--input-bg);
+            border: 1px solid #475569;
+            color: var(--text-color);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary-color);
+        }
+
+        /* Dashboard UI Layout */
+        .dashboard {
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.6rem;
+            color: var(--text-color);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+        }
+
+        .header h2 {
+            margin: 4px 0 0 0;
+            font-size: 1.6rem;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .clock-section {
+            margin: 25px 0;
+            background: #0f172a;
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid #334155;
+        }
+
+        .clock-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .current-time {
+            font-size: 5.5rem;
+            font-weight: 800;
+            color: var(--text-color);
+            font-variant-numeric: tabular-nums;
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .detail-box {
+            background: #0f172a;
+            padding: 15px 10px;
+            border-radius: 14px;
+            border: 1px solid #334155;
+        }
+
+        .detail-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .detail-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .progress-container {
+            background-color: #334155;
+            border-radius: 9999px;
+            height: 36px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #10b981, #34d399);
+            height: 100%;
+            width: 0%;
+            transition: width 0.4s linear;
+            border-radius: 9999px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 24px;
+            border-radius: 9999px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 18px;
+        }
+
+        .status-waiting { background-color: #78350f; color: #fef3c7; border: 1px solid #b45309; }
+        .status-running { background-color: #064e3b; color: #d1fae5; border: 1px solid #047857; }
+        .status-ended { background-color: #4c0519; color: #fee2e2; border: 1px solid #be123c; }
+
+        .time-remaining {
+            font-size: 1.9rem;
+            font-weight: 700;
+            margin-top: 10px;
+            letter-spacing: -0.01em;
+        }
+
+        @media print {
+            .config-panel { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Top Configuration Input Block -->
+    <div class="config-panel">
+        <div class="input-group">
+            <label for="input-subject">Subject / Exam Name</label>
+            <input type="text" id="input-subject" value="Year 11 Mathematics Paper 2">
+        </div>
+        <div class="input-group">
+            <label for="input-start">Start Time</label>
+            <input type="time" id="input-start" value="09:15">
+        </div>
+        <div class="input-group">
+            <label for="input-end">End Time</label>
+            <input type="time" id="input-end" value="11:15">
+        </div>
+    </div>
+
+    <!-- Main Projector Panel -->
+    <div class="dashboard">
+        <div class="header">
+            <h1>SISH Institute</h1>
+            <h2 id="display-subject">Year 11 Mathematics Paper 2</h2>
+        </div>
+
+        <div class="clock-section">
+            <div class="clock-label">Local System Time</div>
+            <div class="current-time" id="live-clock">00:00</div>
+        </div>
+
+        <div class="details-grid">
+            <div class="detail-box">
+                <div class="detail-label">Start Time</div>
+                <div class="detail-value" id="display-start" style="color: var(--primary-color);">09:15 AM</div>
+            </div>
+            <div class="detail-box">
+                <div class="detail-label">End Time</div>
+                <div class="detail-value" id="display-end" style="color: var(--warning-color);">11:15 AM</div>
+            </div>
+            <div class="detail-box">
+                <div class="detail-label">Total Duration</div>
+                <div class="detail-value" id="display-duration">2h 00m</div>
+            </div>
+        </div>
+
+        <div>
+            <span id="status-badge" class="status-badge status-waiting">Waiting</span>
+        </div>
+
+        <div class="progress-container">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+
+        <div id="time-remaining" class="time-remaining">--</div>
+    </div>
+</div>
+
+<script>
+    function formatTime12h(timeStr) {
+        if (!timeStr) return "--:--";
+        const [hours, minutes] = timeStr.split(':');
+        const h = parseInt(hours, 10);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const displayHour = h % 12 === 0 ? 12 : h % 12;
+        return `${String(displayHour).padStart(2, '0')}:${minutes} ${ampm}`;
+    }
+
+    function updateTimer() {
+        const now = new Date();
+        
+        const currentHours = now.getHours();
+        const currentMinutes = now.getMinutes();
+        const currentSeconds = now.getSeconds();
+
+        // Displays standard HH:MM clock without the blinking or ticking seconds
+        document.getElementById('live-clock').innerText = 
+            `${String(currentHours).padStart(2, '0')}:${String(currentMinutes).padStart(2, '0')}`;
+
+        const subjectInput = document.getElementById('input-subject').value || "Exam Session";
+        const startTimeStr = document.getElementById('input-start').value;
+        const endTimeStr = document.getElementById('input-end').value;
+
+        document.getElementById('display-subject').innerText = subjectInput;
+        document.getElementById('display-start').innerText = formatTime12h(startTimeStr);
+        document.getElementById('display-end').innerText = formatTime12h(endTimeStr);
+
+        if (!startTimeStr || !endTimeStr) return;
+
+        const currentTotalMinutes = (currentHours * 60) + currentMinutes + (currentSeconds / 60);
+        
+        const [startH, startM] = startTimeStr.split(':').map(Number);
+        const [endH, endM] = endTimeStr.split(':').map(Number);
+        
+        let startTotalMinutes = (startH * 60) + startM;
+        let endTotalMinutes = (endH * 60) + endM;
+
+        if (endTotalMinutes < startTotalMinutes) {
+            endTotalMinutes += 24 * 60;
+        }
+
+        const totalDurationMinutes = endTotalMinutes - startTotalMinutes;
+        
+        const durationHrs = Math.floor(totalDurationMinutes / 60);
+        const durationMins = totalDurationMinutes % 60;
+        document.getElementById('display-duration').innerText = `${durationHrs}h ${String(durationMins).padStart(2, '0')}m`;
+
+        const badge = document.getElementById('status-badge');
+        const progressBar = document.getElementById('progress-bar');
+        const remainingText = document.getElementById('time-remaining');
+
+        if (currentTotalMinutes < startTotalMinutes) {
+            badge.innerText = "Exam Has Not Started";
+            badge.className = "status-badge status-waiting";
+            progressBar.style.width = "0%";
+            
+            const diffMinutes = startTotalMinutes - currentTotalMinutes;
+            remainingText.innerText = `Starts in: ${formatMinutesNoSeconds(diffMinutes)}`;
+            remainingText.style.color = "var(--text-color)";
+        } 
+        else if (currentTotalMinutes >= startTotalMinutes && currentTotalMinutes <= endTotalMinutes) {
+            badge.innerText = "Exam In Progress";
+            badge.className = "status-badge status-running";
+            
+            const elapsedMinutes = currentTotalMinutes - startTotalMinutes;
+            const progressPercentage = (elapsedMinutes / totalDurationMinutes) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+            
+            const remainingMinutes = endTotalMinutes - currentTotalMinutes;
+
+            if (remainingMinutes <= 5) { 
+                progressBar.style.background = "var(--warning-color)";
+                remainingText.style.color = "var(--warning-color)";
+            } else if (remainingMinutes <= 15) { 
+                progressBar.style.background = "var(--alert-color)";
+                remainingText.style.color = "var(--alert-color)";
+            } else {
+                progressBar.style.background = "linear-gradient(90deg, #10b981, #34d399)";
+                remainingText.style.color = "var(--text-color)";
+            }
+            remainingText.innerText = `Time Remaining: ${formatMinutesNoSeconds(remainingMinutes)}`;
+        } 
+        else {
+            badge.innerText = "Exam Concluded";
+            badge.className = "status-badge status-ended";
+            progressBar.style.width = "100%";
+            progressBar.style.background = "var(--warning-color)";
+            remainingText.innerText = "Stop Writing Immediately.";
+            remainingText.style.color = "var(--warning-color)";
+        }
+    }
+
+    // Displays purely minutes (rounded up cleanly so students aren't cut short by unseen seconds)
+    function formatMinutesNoSeconds(totalMinutes) {
+        const ceilMinutes = Math.ceil(totalMinutes);
+        const hrs = Math.floor(ceilMinutes / 60);
+        const mins = ceilMinutes % 60;
+        
+        const hourString = hrs > 0 ? hrs + 'h ' : '';
+        return `${hourString}${mins}m`;
+    }
+
+    setInterval(updateTimer, 1000);
+    updateTimer();
+</script>
+
+</body>
+</html>
